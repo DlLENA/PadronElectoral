@@ -1,0 +1,179 @@
+
+# =========================================================
+# JAVA
+# =========================================================
+
+*.class
+*.log
+hs_err_pid*
+replay_pid*
+
+# Archivos temporales
+*.tmp
+*.swp
+*~
+
+# =========================================================
+# MAVEN / SPRING INITIALIZR
+# =========================================================
+
+# Archivos generados durante la compilacion
+target/
+
+# Archivo de ayuda generado por Spring Initializr
+HELP.md
+
+# Archivos auxiliares de Maven
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# =========================================================
+# MAVEN WRAPPER (NO SE UTILIZA)
+# =========================================================
+
+.mvn/wrapper/
+mvnw
+mvnw.cmd
+
+# =========================================================
+# SPRING BOOT / SPRING TOOLS
+# =========================================================
+
+.springBeans
+.sts4-cache
+
+# =========================================================
+# CONFIGURACION LOCAL Y SECRETOS
+# =========================================================
+
+# Configuraciones locales de Spring Boot
+application-local.properties
+application-local.yml
+application-local.yaml
+
+application-dev-local.properties
+application-dev-local.yml
+application-dev-local.yaml
+
+# Archivos de configuracion con secretos
+application-secrets.properties
+application-secrets.yml
+application-secrets.yaml
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Certificados y claves privadas
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Carpetas de secretos locales
+secrets/
+private/
+
+# =========================================================
+# ECLIPSE / SPRING TOOL SUITE
+# =========================================================
+
+# Metadatos del espacio de trabajo de Eclipse
+.metadata/
+
+# Archivos auxiliares y cachés
+.recommenders/
+.externalToolBuilders/
+.loadpath
+.factorypath
+.apt_generated/
+.apt_generated_test/
+
+# Configuracion especifica de Eclipse.
+# Por ahora permitimos compartir estos archivos.
+# Si decidimos ignorarlos, descomentar:
+# .classpath
+# .project
+# .settings/
+
+# Configuraciones personales de ejecucion
+*.launch
+
+# =========================================================
+# INTELLIJ IDEA
+# =========================================================
+
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# =========================================================
+# VISUAL STUDIO CODE
+# =========================================================
+
+.vscode/
+.history/
+*.code-workspace
+
+# =========================================================
+# NETBEANS
+# =========================================================
+
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# =========================================================
+# GRADLE (POR SI SE UTILIZA EN OTRO MODULO)
+# =========================================================
+
+.gradle/
+**/build/
+
+# =========================================================
+# SISTEMA OPERATIVO
+# =========================================================
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+.directory
+
+# =========================================================
+# BASE DE DATOS / SQL SERVER
+# =========================================================
+
+# Copias de seguridad y archivos fisicos de SQL Server
+*.bak
+*.mdf
+*.ldf
+*.ndf
+*.bacpac
+*.dump
+*.sqlplan
+
+# Datos y exportaciones locales
+local-data/
+exports/

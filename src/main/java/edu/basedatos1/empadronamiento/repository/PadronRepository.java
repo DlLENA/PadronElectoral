@@ -11,11 +11,30 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.stereotype.Repository;
 
+/**
+ * Repositorio encargado de comunicarse con SQL Server.
+ *
+ * Utiliza JdbcTemplate para ejecutar los procedimientos
+ * almacenados definidos en el esquema Temporal.
+ *
+ * Los resultados se reciben como listas o mapas para que
+ * los servicios puedan transformarlos en los modelos de la API.
+ */
 @Repository
 public class PadronRepository {
 
+    /*
+     * JdbcTemplate permite ejecutar instrucciones SQL
+     * y recuperar sus resultados sin administrar manualmente
+     * las conexiones JDBC.
+     */
     private final JdbcTemplate jdbcTemplate;
 
+    /**
+     * Spring inyecta automáticamente JdbcTemplate.
+     *
+     * @param jdbcTemplate herramienta de acceso a SQL Server
+     */
     public PadronRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
@@ -24,6 +43,9 @@ public class PadronRepository {
     // CATÁLOGOS
     // =====================================================
 
+    /**
+     * Obtiene los municipios disponibles.
+     */
     public List<Map<String, Object>> listarMunicipios() {
         return jdbcTemplate.query(
                 "EXEC Temporal.sp_listar_municipios",
@@ -31,6 +53,9 @@ public class PadronRepository {
         );
     }
 
+    /**
+     * Obtiene los géneros disponibles.
+     */
     public List<Map<String, Object>> listarGeneros() {
         return jdbcTemplate.query(
                 "EXEC Temporal.sp_listar_generos",
@@ -38,6 +63,9 @@ public class PadronRepository {
         );
     }
 
+    /**
+     * Obtiene las situaciones de afiliación disponibles.
+     */
     public List<Map<String, Object>> listarAfiliaciones() {
         return jdbcTemplate.query(
                 "EXEC Temporal.sp_listar_afiliaciones",
@@ -45,6 +73,9 @@ public class PadronRepository {
         );
     }
 
+    /**
+     * Obtiene los estados del padrón.
+     */
     public List<Map<String, Object>> listarEstados() {
         return jdbcTemplate.query(
                 "EXEC Temporal.sp_listar_estados",
@@ -52,6 +83,11 @@ public class PadronRepository {
         );
     }
 
+    /**
+     * Obtiene los centros de votación de un municipio.
+     *
+     * @param municipioId identificador del municipio
+     */
     public List<Map<String, Object>> listarCentros(int municipioId) {
         return jdbcTemplate.query(
                 "EXEC Temporal.sp_listar_centros ?",
@@ -60,6 +96,11 @@ public class PadronRepository {
         );
     }
 
+    /**
+     * Obtiene las mesas electorales de un centro.
+     *
+     * @param centroId identificador del centro de votación
+     */
     public List<Map<String, Object>> listarMesas(int centroId) {
         return jdbcTemplate.query(
                 "EXEC Temporal.sp_listar_mesas ?",
@@ -72,6 +113,16 @@ public class PadronRepository {
     // REGISTRO DE CIUDADANOS
     // =====================================================
 
+    /**
+     * Ejecuta el procedimiento almacenado que registra
+     * un ciudadano en el padrón electoral.
+     *
+     * El procedimiento almacenado valida los datos,
+     * genera el número de empadronamiento y devuelve
+     * el resultado de la operación.
+     *
+     * @return mapa con las columnas devueltas por el procedimiento
+     */
     public Map<String, Object> registrarCiudadano(
             String cui,
             Date fechaEmisionDpi,
@@ -89,6 +140,11 @@ public class PadronRepository {
             int idMesa,
             int idMuniResidencia) {
 
+        /*
+         * Los signos ? representan parámetros.
+         * JdbcTemplate envía sus valores por separado,
+         * evitando concatenarlos directamente en el SQL.
+         */
         String sql = """
                 EXEC Temporal.sp_registrar_ciudadano
                     @CUI = ?,
@@ -108,6 +164,11 @@ public class PadronRepository {
                     @ID_Muni_Residencia = ?
                 """;
 
+        /*
+         * queryForMap espera una única fila de resultado.
+         * Se indica explícitamente Types.DATE para la fecha
+         * de emisión, que puede ser null según el procedimiento.
+         */
         return jdbcTemplate.queryForMap(
                 sql,
                 cui,
@@ -132,6 +193,15 @@ public class PadronRepository {
     // CONSULTA DE EMPADRONAMIENTO
     // =====================================================
 
+    /**
+     * Busca un ciudadano mediante su DPI o número
+     * de empadronamiento y su fecha de nacimiento.
+     *
+     * @param tipo tipo de documento utilizado en la consulta
+     * @param numero número de DPI o empadronamiento
+     * @param fechaNacimiento fecha de nacimiento que debe coincidir
+     * @return filas devueltas por el procedimiento almacenado
+     */
     public List<Map<String, Object>> consultarEmpadronamiento(
             String tipo,
             String numero,

@@ -64,6 +64,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '422':
           $ref: '#/components/responses/ReglaDeNegocio'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
 
   /api/consultas:
     post:
@@ -91,6 +93,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '404':
           $ref: '#/components/responses/NoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
 
   /api/captcha:
     get:
@@ -105,6 +109,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CaptchaResponse'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
 
   /api/catalogos/municipios:
     get:
@@ -120,6 +126,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/CatalogoItem'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
 
   /api/catalogos/generos:
     get:
@@ -135,6 +143,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/CatalogoItem'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
 
   /api/catalogos/afiliaciones:
     get:
@@ -150,6 +160,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/CatalogoItem'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
 
   /api/catalogos/estados:
     get:
@@ -165,6 +177,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/CatalogoItem'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
 
   /api/catalogos/centros:
     get:
@@ -188,6 +202,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/CentroItem'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
 
   /api/catalogos/mesas:
     get:
@@ -211,6 +229,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MesaItem'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
 
 # =====================================================================
 # COMPONENTES REUTILIZABLES
@@ -233,6 +255,12 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
     NoEncontrado:
       description: Sin coincidencia. El mensaje es genérico y no revela datos de ningún ciudadano
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ErrorInterno:
+      description: Error interno inesperado. No se exponen detalles técnicos al cliente.
       content:
         application/json:
           schema:

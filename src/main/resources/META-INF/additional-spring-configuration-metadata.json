@@ -1,0 +1,10 @@
+{
+  "properties": [
+    {
+      "name": "springdoc.swagger-ui.path",
+      "type": "java.lang.String",
+      "description": "Ruta donde se muestra Swagger UI.",
+      "defaultValue": "/swagger-ui.html"
+    }
+  ]
+}

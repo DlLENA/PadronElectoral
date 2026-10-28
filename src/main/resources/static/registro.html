@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Empadronamiento | TSE</title>
+    <!-- Importamos Bootstrap 5 para un diseño moderno y rápido -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; }
+        .card-tse { border-top: 5px solid #0d6efd; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+    <!-- Barra de navegación -->
+    <nav class="navbar navbar-dark bg-primary mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">🗳️ Sistema de Empadronamiento - Jutiapa</a>
+            <a class="btn btn-outline-light btn-sm" href="consulta.html">Ir a Consultas</a>
+        </div>
+    </nav>
+
+    <!-- Contenedor principal -->
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card card-tse p-4">
+                    <h3 class="text-center mb-4">Formulario de Registro</h3>
+                    <p class="text-muted text-center">Ingrese sus datos exactamente como aparecen en su DPI.</p>
+                    
+                    <form id="formRegistro">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="dpi" class="form-label fw-bold">Número de DPI (CUI)</label>
+                                <input type="text" class="form-control" id="dpi" placeholder="Ej. 1234567890101" maxlength="13" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="nombres" class="form-label fw-bold">Nombres</label>
+                                <input type="text" class="form-control" id="nombres" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="apellidos" class="form-label fw-bold">Apellidos</label>
+                                <input type="text" class="form-control" id="apellidos" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="fechaNacimiento" class="form-label fw-bold">Fecha de Nacimiento</label>
+                                <input type="date" class="form-control" id="fechaNacimiento" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="municipio" class="form-label fw-bold">Municipio de Residencia</label>
+                                <!-- Este select lo llenaremos mágicamente con JavaScript y tu API -->
+                                <select class="form-select" id="municipio" required>
+                                    <option value="">Cargando municipios...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="direccion" class="form-label fw-bold">Dirección Completa</label>
+                            <input type="text" class="form-control" id="direccion" placeholder="Calle, Avenida, Zona, Caserío o Aldea" required>
+                        </div>
+
+                        <!-- reCAPTCHA de Google -->
+                        <div class="mb-4 d-flex justify-content-center">
+                            <div class="g-recaptcha" data-sitekey="6LciFwQuAAAAAAdzBKlEpg9ro-ucdW3CiPDZYZd_"></div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Registrar Empadronamiento</button>
+                        </div>
+                        
+                        <!-- Mensaje de alerta para mostrar si fue exitoso o falló -->
+                        <div id="mensajeAlerta" class="mt-3 text-center" style="display: none;"></div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Importamos nuestro propio JavaScript al final -->
+    <script src="app.js"></script>
+</body>
+</html>

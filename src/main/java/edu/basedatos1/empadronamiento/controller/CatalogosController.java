@@ -11,6 +11,7 @@ import edu.basedatos1.empadronamiento_api.api.CatalogosApi;
 import edu.basedatos1.empadronamiento_api.model.CatalogoItem;
 import edu.basedatos1.empadronamiento_api.model.CentroItem;
 import edu.basedatos1.empadronamiento_api.model.MesaItem;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 /**
  * Controlador REST encargado de exponer los catálogos
@@ -22,6 +23,7 @@ import edu.basedatos1.empadronamiento_api.model.MesaItem;
  * La consulta y transformación de los datos se delega
  * a CatalogosService.
  */
+@CrossOrigin(origins = "*")
 @RestController
 public class CatalogosController implements CatalogosApi {
 

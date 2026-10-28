@@ -1,16 +1,16 @@
-// Se ejecuta apenas la página HTML termina de cargar
 document.addEventListener("DOMContentLoaded", () => {
-    
-    // 1. LÓGICA PARA LA PANTALLA DE REGISTRO
-    const selectMunicipio = document.getElementById('municipio');
-    if (selectMunicipio) {
-        cargarMunicipios();
+    // 1. PANTALLA DE REGISTRO
+    const formRegistro = document.getElementById('formRegistro');
+    if (formRegistro) {
+        cargarTodosLosCatalogos();
+        cargarCaptchaRegistro(); 
+        formRegistro.addEventListener('submit', realizarRegistro);
     }
 
-    // 2. LÓGICA PARA LA PANTALLA DE CONSULTA
+    // 2. PANTALLA DE CONSULTA
     const formConsulta = document.getElementById('formConsulta');
     if (formConsulta) {
-        cargarCaptchaConsulta(); // Llama al CAPTCHA de Diego al entrar a la página
+        cargarCaptchaConsulta(); 
         formConsulta.addEventListener('submit', realizarConsulta);
     }
 });
@@ -18,106 +18,148 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==========================================
 // FUNCIONES DE REGISTRO
 // ==========================================
-function cargarMunicipios() {
-    const url = 'http://localhost:8081/api/catalogos/municipios';
-    fetch(url)
-        .then(response => {
-            if (!response.ok) throw new Error('Error al conectar con la API');
-            return response.json();
-        })
+function cargarTodosLosCatalogos() {
+    // Función reutilizable para llenar los <select>
+    const llenarSelect = (url, selectIds) => {
+        fetch(`http://localhost:8081/api/catalogos/${url}`)
+            .then(res => res.json())
+            .then(data => {
+                let opciones = '<option value="">Seleccione...</option>';
+                data.forEach(item => opciones += `<option value="${item.id}">${item.nombre || item.descripcion}</option>`);
+                selectIds.forEach(id => document.getElementById(id).innerHTML = opciones);
+            }).catch(e => console.error(`Error cargando ${url}:`, e));
+    };
+
+    llenarSelect('municipios', ['idMuniVecindad', 'idMuniResidencia']);
+    llenarSelect('generos', ['idGenero']);
+    llenarSelect('estados', ['idEstado']);
+    llenarSelect('afiliaciones', ['idAfiliacion']);
+}
+
+function cargarCaptchaRegistro() {
+    fetch('http://localhost:8081/api/captcha')
+        .then(response => response.json())
         .then(data => {
-            const selectMunicipio = document.getElementById('municipio');
-            selectMunicipio.innerHTML = '<option value="">Seleccione un municipio...</option>'; 
-            data.forEach(municipio => {
-                const option = document.createElement('option');
-                option.value = municipio.id;       
-                option.text = municipio.nombre;    
-                selectMunicipio.appendChild(option);
-            });
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('municipio').innerHTML = '<option value="">Error al cargar municipios</option>';
-        });
+            const img = document.getElementById('imagenCaptchaReg');
+            img.src = data.imagenBase64.startsWith('data:image') ? data.imagenBase64 : 'data:image/png;base64,' + data.imagenBase64;
+            img.style.display = 'inline-block';
+            document.getElementById('captchaIdOcultoReg').value = data.id; 
+            document.getElementById('respuestaCaptchaReg').value = ''; 
+        }).catch(err => console.error(err));
+}
+
+function realizarRegistro(event) {
+    event.preventDefault(); 
+    mostrarAlertaRegistro('Procesando registro en base de datos...', 'info');
+
+    const payload = {
+        cui: document.getElementById('cui').value.trim(),
+        fechaEmisionDpi: document.getElementById('fechaEmisionDpi').value,
+        fechaNacimiento: document.getElementById('fechaNacimiento').value,
+        primerNombre: document.getElementById('primerNombre').value.trim(),
+        segundoNombre: document.getElementById('segundoNombre').value.trim(),
+        apellidos: document.getElementById('apellidos').value.trim(),
+        
+        leeEscribe: document.getElementById('leeEscribe').value === 'true',
+        vidente: document.getElementById('vidente').value === 'true',
+        tieneDireccionGeoelectoral: document.getElementById('tieneDireccionGeoelectoral').value === 'true',
+        
+        idGenero: parseInt(document.getElementById('idGenero').value),
+        idEstado: parseInt(document.getElementById('idEstado').value),
+        idAfiliacion: parseInt(document.getElementById('idAfiliacion').value),
+        idMuniVecindad: parseInt(document.getElementById('idMuniVecindad').value),
+        idMesa: parseInt(document.getElementById('idMesa').value),
+        idMuniResidencia: parseInt(document.getElementById('idMuniResidencia').value),
+        
+        captchaId: document.getElementById('captchaIdOcultoReg').value,
+        captchaRespuesta: document.getElementById('respuestaCaptchaReg').value
+    };
+
+    fetch('http://localhost:8081/api/empadronamientos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(async response => {
+        if (response.ok || response.status === 201) { 
+            mostrarAlertaRegistro('✅ ¡EMPADRONAMIENTO REGISTRADO CORRECTAMENTE!', 'success');
+            document.getElementById('formRegistro').reset(); 
+            cargarCaptchaRegistro(); 
+        } else {
+            const errorData = await response.json();
+            mostrarAlertaRegistro(`❌ Error de validación: ${errorData.mensaje || 'Datos incorrectos'}`, 'danger');
+            cargarCaptchaRegistro(); 
+        }
+    })
+    .catch(error => mostrarAlertaRegistro('❌ Error crítico de red.', 'danger'));
+}
+
+function mostrarAlertaRegistro(mensaje, tipo) {
+    const divAlerta = document.getElementById('mensajeAlerta');
+    divAlerta.innerHTML = `<div class="alert alert-${tipo} fw-bold">${mensaje}</div>`;
+    divAlerta.style.display = 'block';
 }
 
 // ==========================================
-// FUNCIONES DE CONSULTA
+// FUNCIONES DE CONSULTA 
 // ==========================================
 function cargarCaptchaConsulta() {
     fetch('http://localhost:8081/api/captcha')
         .then(response => response.json())
         .then(data => {
             const img = document.getElementById('imagenCaptcha');
-            const hiddenId = document.getElementById('captchaIdOculto');
-            
-            // Verifica si el backend ya manda el prefijo de imagen, sino se lo agregamos
-            if (data.imagenBase64.startsWith('data:image')) {
-                img.src = data.imagenBase64;
-            } else {
-                img.src = 'data:image/png;base64,' + data.imagenBase64;
-            }
-            
-            img.style.display = 'block';
-            hiddenId.value = data.id; // Guardamos el ID secreto para mandarlo en el POST
-            document.getElementById('respuestaCaptcha').value = ''; // Limpiar la cajita
-        })
-        .catch(error => {
-            console.error('Error al cargar CAPTCHA:', error);
-        });
+            img.src = data.imagenBase64.startsWith('data:image') ? data.imagenBase64 : 'data:image/png;base64,' + data.imagenBase64;
+            img.style.display = 'inline-block';
+            document.getElementById('captchaIdOculto').value = data.id; 
+            document.getElementById('respuestaCaptcha').value = ''; 
+        }).catch(err => console.error(err));
 }
 
 function realizarConsulta(event) {
-    event.preventDefault(); // Evita que la página parpadee y se recargue
-
-    // Recolectar los datos del HTML
-    const dpi = document.getElementById('dpiConsulta').value;
-    const fechaNac = document.getElementById('fechaNacConsulta').value;
-    const captchaId = document.getElementById('captchaIdOculto').value;
-    const captchaResp = document.getElementById('respuestaCaptcha').value;
-    const divResultado = document.getElementById('resultadoConsulta');
-
-    // Armar el JSON exactamente como en el Swagger
+    event.preventDefault(); 
     const payload = {
-        tipo: "EMPADRONAMIENTO",
-        numero: dpi,
-        fechaNacimiento: fechaNac,
-        captchaId: captchaId,
-        captchaRespuesta: captchaResp
+        tipo: "DPI",
+        numero: document.getElementById('dpiConsulta').value,
+        fechaNacimiento: document.getElementById('fechaNacConsulta').value,
+        captchaId: document.getElementById('captchaIdOculto').value,
+        captchaRespuesta: document.getElementById('respuestaCaptcha').value
     };
 
-    // Hacer el POST a la API
     fetch('http://localhost:8081/api/consultas', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
     .then(async response => {
+        const divResultado = document.getElementById('resultadoConsulta');
         divResultado.style.display = 'block';
         
         if (response.ok) {
-            // Si el backend da un código 200 OK (Empadronado)
+            const ciudadano = await response.json(); 
             divResultado.innerHTML = `
-                <div class="alert alert-success">
-                    <strong>¡Ciudadano Empadronado!</strong><br>
-                    El DPI ${dpi} se encuentra registrado en el sistema electoral.
+                <div class="card border-success mb-3 mt-3">
+                    <div class="card-header bg-success text-white fw-bold">
+                        ✅ Empadronamiento Activo: ${ciudadano.estado}
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">${ciudadano.datosPersonales.nombreCompleto}</h5>
+                        <p class="card-text mb-1"><strong>DPI (CUI):</strong> ${ciudadano.identificacion.cui}</p>
+                        <p class="card-text mb-1"><strong>Departamento:</strong> ${ciudadano.vecindad.departamento}</p>
+                        <p class="card-text mb-1"><strong>Municipio:</strong> ${ciudadano.vecindad.municipio}</p>
+                        <hr>
+                        <h6 class="fw-bold text-primary">📍 Datos de Votación</h6>
+                        <p class="card-text mb-1"><strong>Centro de Votación:</strong> ${ciudadano.residenciaVotacion.centroVotacion}</p>
+                        <p class="card-text mb-1 text-danger fw-bold"><strong>Mesa Asignada:</strong> ${ciudadano.residenciaVotacion.numeroMesa}</p>
+                    </div>
                 </div>`;
         } else {
-            // Si da error (CAPTCHA inválido, DPI no encontrado, etc.)
-            divResultado.innerHTML = `
-                <div class="alert alert-danger">
-                    <strong>Alerta:</strong> No se pudo validar el empadronamiento o el código de seguridad es incorrecto.
-                </div>`;
-            cargarCaptchaConsulta(); // Recargamos la imagen por seguridad
+            const errorData = await response.json();
+            divResultado.innerHTML = `<div class="alert alert-danger"><strong>❌ ${errorData.mensaje || 'DPI no encontrado o código incorrecto.'}</strong></div>`;
+            cargarCaptchaConsulta(); 
         }
     })
     .catch(error => {
-        divResultado.style.display = 'block';
-        divResultado.innerHTML = `
-            <div class="alert alert-danger">
-                <strong>Error de conexión:</strong> No hay comunicación con el servidor.
-            </div>`;
+        document.getElementById('resultadoConsulta').innerHTML = `<div class="alert alert-danger"><strong>Error de conexión.</strong></div>`;
+        document.getElementById('resultadoConsulta').style.display = 'block';
     });
 }

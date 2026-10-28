@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -22,15 +23,26 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-6">
-                <div class="card card-tse p-4 text-center">
+                <div class="card card-tse p-4 text-center mb-5">
                     <h3 class="mb-3">Verifique su estado</h3>
                     <p class="text-muted">Ingrese sus datos para consultar si ya está empadronado.</p>
                     
                     <form id="formConsulta">
+                        
+                        <!-- Selector de Tipo de Búsqueda -->
                         <div class="mb-3 text-start">
-                            <label class="form-label fw-bold">Número de DPI (CUI)</label>
-                            <input type="text" class="form-control" id="dpiConsulta" placeholder="Ej. 1234567890101" maxlength="13" required>
+                            <label class="form-label fw-bold">Tipo de Búsqueda</label>
+                            <select class="form-select border-success" id="tipoBusqueda" required>
+                                <option value="DPI">DPI (CUI de 13 dígitos)</option>
+                                <option value="EMPADRONAMIENTO">No. de Empadronamiento (10 caracteres)</option>
+                            </select>
                         </div>
+
+                        <div class="mb-3 text-start">
+                            <label class="form-label fw-bold">Número de Documento</label>
+                            <input type="text" class="form-control" id="dpiConsulta" placeholder="Ej. 1234567890101 o A1B2C3D4E5" required>
+                        </div>
+                        
                         <div class="mb-3 text-start">
                             <label class="form-label fw-bold">Fecha de Nacimiento</label>
                             <input type="date" class="form-control" id="fechaNacConsulta" required>
@@ -40,17 +52,15 @@
                         <div class="mb-4 p-3 bg-light border rounded">
                             <label class="form-label fw-bold d-block">Verificación de Seguridad</label>
                             <div class="d-flex justify-content-center align-items-center mb-2">
-                                <!-- Aquí inyectaremos la imagen Base64 de Diego -->
                                 <img id="imagenCaptcha" src="" alt="Cargando CAPTCHA..." class="captcha-img me-3" style="display: none;">
                                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cargarCaptchaConsulta()">🔄 Recargar</button>
                             </div>
-                            <input type="text" class="form-control text-center" id="respuestaCaptcha" placeholder="Ingrese el texto de la imagen" required>
-                            <!-- Guardaremos el ID oculto para enviarlo en el POST -->
+                            <input type="text" class="form-control text-center mx-auto" id="respuestaCaptcha" placeholder="Ingrese el texto de la imagen" style="max-width: 200px;" required>
                             <input type="hidden" id="captchaIdOculto">
                         </div>
 
                         <div class="d-grid">
-                            <button class="btn btn-success btn-lg" type="submit" id="btnConsultar">Consultar Empadronamiento</button>
+                            <button class="btn btn-success btn-lg fw-bold" type="submit" id="btnConsultar">Consultar Empadronamiento</button>
                         </div>
                     </form>
 
@@ -59,6 +69,6 @@
             </div>
         </div>
     </div>
-    <script src="app.js"></script>
+    <script src="app.js?v=2"></script>
 </body>
 </html>

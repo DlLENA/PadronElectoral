@@ -3,9 +3,6 @@ openapi: 3.0.3
 # =====================================================================
 # CONTRATO DE LA API - PADRÓN ELECTORAL (JUTIAPA)
 # Ubicación en el proyecto: src/main/resources/openapi/openapi.yaml
-# El generador de OpenAPI lee este archivo y crea:
-#   - los DTOs      (components/schemas)  -> paquete model
-#   - las interfaces de los controladores (paths + tags) -> paquete api
 # =====================================================================
 
 info:
@@ -21,7 +18,6 @@ servers:
   - url: http://172.16.0.100:8080
     description: Servidor SRV-PRJFINAL (solo si la API se despliega en la VM de la base de datos)
 
-# Cada tag genera UNA interfaz (useTags=true): EmpadronamientosApi, ConsultasApi, CaptchaApi, CatalogosApi
 tags:
   - name: Empadronamientos
     description: Módulo 1 - Registro de un nuevo empadronamiento
@@ -32,13 +28,7 @@ tags:
   - name: Catalogos
     description: Listas para llenar los combos de la pantalla de registro
 
-# =====================================================================
-# RUTAS
-# Regla acordada: si el endpoint devuelve una COLECCIÓN, la respuesta es un
-# arreglo (type: array). Si devuelve UNA cosa, es un objeto.
-# =====================================================================
 paths:
-
   /api/empadronamientos:
     post:
       tags: [Empadronamientos]
@@ -72,10 +62,6 @@ paths:
       tags: [Consultas]
       operationId: consultarEmpadronamiento
       summary: Consultar si un ciudadano está empadronado
-      description: >
-        Se usa POST (y no GET) para que el DPI y la fecha de nacimiento viajen en el
-        cuerpo y no queden en la URL, en logs ni en el historial del navegador.
-        Primero se valida el captcha y luego se llama a sp_consultar_empadronamiento.
       requestBody:
         required: true
         content:
@@ -101,7 +87,6 @@ paths:
       tags: [Captcha]
       operationId: obtenerCaptcha
       summary: Generar un nuevo código de verificación
-      description: Cada captcha sirve una sola vez y expira. Para cambiarlo, se pide uno nuevo.
       responses:
         '200':
           description: Captcha generado
@@ -234,15 +219,10 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorInterno'
 
-# =====================================================================
-# COMPONENTES REUTILIZABLES
-# =====================================================================
 components:
-
-  # Respuestas de error que se repiten en varias rutas
   responses:
     SolicitudInvalida:
-      description: Datos con formato inválido (campo faltante, CUI mal formado, captcha incorrecto)
+      description: Datos con formato inválido
       content:
         application/json:
           schema:
@@ -254,75 +234,54 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     NoEncontrado:
-      description: Sin coincidencia. El mensaje es genérico y no revela datos de ningún ciudadano
+      description: Sin coincidencia.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     ErrorInterno:
-      description: Error interno inesperado. No se exponen detalles técnicos al cliente.
+      description: Error interno inesperado.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
 
   schemas:
-
-    # ---------------------------------------------------------------
-    # DTOs de CATÁLOGOS
-    # ---------------------------------------------------------------
     CatalogoItem:
       type: object
-      description: Elemento de una lista (municipio, género, afiliación o estado)
       required: [id, nombre]
       properties:
         id:
           type: integer
           format: int32
-          example: 1
         nombre:
           type: string
-          example: JUTIAPA
 
     CentroItem:
       type: object
-      description: Centro de votación
       required: [id, nombre, direccion]
       properties:
         id:
           type: integer
           format: int32
-          example: 1
         nombre:
           type: string
-          example: ESCUELA OFICIAL URBANA MIXTA JUTIAPA
         direccion:
           type: string
-          example: CABECERA MUNICIPAL, ZONA 1, JUTIAPA
 
     MesaItem:
       type: object
-      description: Mesa electoral de un centro. El id es el que se envía al registrar.
       required: [id, numero]
       properties:
         id:
           type: integer
           format: int32
-          example: 1
         numero:
           type: integer
           format: int32
-          example: 1
 
-    # ---------------------------------------------------------------
-    # DTOs del REGISTRO (Módulo 1)
-    # ---------------------------------------------------------------
     RegistroRequest:
       type: object
-      description: >
-        Datos para empadronar a un ciudadano. Los combos se envían como ID.
-        No se envían el número de empadronamiento ni la fecha de registro,
-        porque los genera el sistema.
       required:
         - cui
         - fechaNacimiento
@@ -336,38 +295,22 @@ components:
         - idMuniVecindad
         - idMesa
         - idMuniResidencia
-        # Si el grupo decide que la fecha de emisión del DPI es obligatoria
-        # (NOT NULL en la base), agregar aquí: - fechaEmisionDpi
       properties:
         cui:
           type: string
-          description: Código Único de Identificación (DPI), exactamente 13 dígitos
           pattern: '^[0-9]{13}$'
-          example: '1234567890101'
         fechaEmisionDpi:
           type: string
           format: date
-          description: Fecha de emisión del DPI (opcional por ahora, ver nota en required)
-          example: '2020-03-15'
         fechaNacimiento:
           type: string
           format: date
-          description: Debe ser 2009-01-01 o anterior (18 años cumplidos al 01/01/2027)
-          example: '2000-05-10'
         primerNombre:
           type: string
-          minLength: 1
-          maxLength: 50
-          example: Juan
         segundoNombre:
           type: string
-          maxLength: 50
-          example: Carlos
         apellidos:
           type: string
-          minLength: 1
-          maxLength: 100
-          example: Pérez López
         leeEscribe:
           type: boolean
         vidente:
@@ -377,29 +320,21 @@ components:
         idGenero:
           type: integer
           format: int32
-          example: 1
         idEstado:
           type: integer
           format: int32
-          description: Opcional. Si no se envía, queda ACTIVO.
-          example: 1
         idAfiliacion:
           type: integer
           format: int32
-          example: 2
         idMuniVecindad:
           type: integer
           format: int32
-          example: 1
         idMesa:
           type: integer
           format: int32
-          description: Mesa elegida (determina el centro y el lugar de votación)
-          example: 1
         idMuniResidencia:
           type: integer
           format: int32
-          example: 1
 
     RegistroResponse:
       type: object
@@ -407,18 +342,11 @@ components:
       properties:
         numeroEmpadronamiento:
           type: string
-          description: Generado por la base de datos, 10 caracteres alfanuméricos
-          example: A1B2C3D4E5
         mensaje:
           type: string
-          example: EMPADRONAMIENTO REGISTRADO CORRECTAMENTE.
 
-    # ---------------------------------------------------------------
-    # DTOs de la CONSULTA (Módulo 2)
-    # ---------------------------------------------------------------
     TipoDocumento:
       type: string
-      description: Tipo de documento con el que se consulta
       enum: [EMPADRONAMIENTO, DPI]
 
     ConsultaRequest:
@@ -429,31 +357,20 @@ components:
           $ref: '#/components/schemas/TipoDocumento'
         numero:
           type: string
-          minLength: 1
-          maxLength: 50
-          description: No. de empadronamiento (10) o DPI (13), según el tipo
-          example: '1234567890101'
         fechaNacimiento:
           type: string
           format: date
-          description: Debe coincidir con la registrada (la pantalla la muestra como dd/mm/aaaa)
-          example: '2000-05-10'
         captchaId:
           type: string
-          description: Identificador del captcha obtenido en GET /api/captcha
         captchaRespuesta:
           type: string
-          description: Código que el usuario escribió viendo la imagen
 
     ConsultaResponse:
       type: object
-      description: Resultado organizado en las secciones que pide el documento del proyecto
       required: [estado, identificacion, datosPersonales, vecindad, residenciaVotacion]
       properties:
         estado:
           type: string
-          description: Estado del registro en el padrón
-          example: ACTIVO
         identificacion:
           $ref: '#/components/schemas/SeccionIdentificacion'
         datosPersonales:
@@ -468,91 +385,64 @@ components:
       properties:
         numeroEmpadronamiento:
           type: string
-          example: A1B2C3D4E5
         cui:
           type: string
-          example: '1234567890101'
         fechaEmisionDpi:
           type: string
           format: date
-          example: '2020-03-15'
 
     SeccionDatosPersonales:
       type: object
       properties:
         nombreCompleto:
           type: string
-          description: Primer nombre, segundo nombre y apellidos unidos por la API
-          example: JUAN CARLOS PÉREZ LÓPEZ
         genero:
           type: string
-          example: MASCULINO
         leeEscribe:
           type: string
-          description: SI o NO
-          example: 'SI'
         vidente:
           type: string
-          description: SI o NO
-          example: 'SI'
 
     SeccionVecindad:
       type: object
       properties:
         departamento:
           type: string
-          example: JUTIAPA
         municipio:
           type: string
-          example: JUTIAPA
 
     SeccionResidenciaVotacion:
       type: object
       properties:
         departamentoResidencia:
           type: string
-          example: JUTIAPA
         municipioResidencia:
           type: string
-          example: JUTIAPA
         direccionGeoelectoral:
           type: string
-          description: SI o NO
-          example: 'SI'
         centroVotacion:
           type: string
-          example: ESCUELA OFICIAL URBANA MIXTA JUTIAPA
         direccionCentro:
           type: string
-          example: CABECERA MUNICIPAL, ZONA 1, JUTIAPA
         municipioCentro:
           type: string
-          example: JUTIAPA
         numeroMesa:
           type: integer
           format: int32
-          example: 1
         afiliacion:
           type: string
-          example: NO ESTÁ AFILIADO
 
-    # ---------------------------------------------------------------
-    # DTOs del CAPTCHA y de ERRORES
-    # ---------------------------------------------------------------
     CaptchaResponse:
       type: object
       required: [id, imagenBase64, expiraEnSegundos]
       properties:
         id:
           type: string
-          description: Se debe devolver en la consulta como captchaId
         imagenBase64:
           type: string
-          description: Imagen PNG del código, codificada en base64
         expiraEnSegundos:
           type: integer
           format: int32
-          example: 120
 
     ErrorResponse:
       type: object
@@ -560,4 +450,3 @@ components:
       properties:
         mensaje:
           type: string
-          example: EL DPI (CUI) DEBE TENER EXACTAMENTE 13 DÍGITOS NUMÉRICOS.

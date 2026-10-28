@@ -1,3 +1,4 @@
+
 document.addEventListener("DOMContentLoaded", () => {
     // 1. PANTALLA DE REGISTRO
     const formRegistro = document.getElementById('formRegistro');
@@ -21,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function cargarTodosLosCatalogos() {
     // Función reutilizable para llenar los <select>
     const llenarSelect = (url, selectIds) => {
-        fetch(`http://localhost:8081/api/catalogos/${url}`)
+        fetch(`/api/catalogos/${url}`)
             .then(res => res.json())
             .then(data => {
                 let opciones = '<option value="">Seleccione...</option>';
@@ -37,7 +38,7 @@ function cargarTodosLosCatalogos() {
 }
 
 function cargarCaptchaRegistro() {
-    fetch('http://localhost:8081/api/captcha')
+    fetch('/api/captcha')
         .then(response => response.json())
         .then(data => {
             const img = document.getElementById('imagenCaptchaReg');
@@ -75,14 +76,14 @@ function realizarRegistro(event) {
         captchaRespuesta: document.getElementById('respuestaCaptchaReg').value
     };
 
-    fetch('http://localhost:8081/api/empadronamientos', {
+    fetch('/api/empadronamientos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
     .then(async response => {
         if (response.ok || response.status === 201) { 
-            mostrarAlertaRegistro('✅ ¡EMPADRONAMIENTO REGISTRADO CORRECTAMENTE!', 'success');
+			mostrarAlertaRegistro(`✅ REGISTRO EXITOSO. Su No. de Empadronamiento es: <strong>${successData.numeroEmpadronamiento}</strong>`, 'success');
             document.getElementById('formRegistro').reset(); 
             cargarCaptchaRegistro(); 
         } else {
@@ -104,7 +105,7 @@ function mostrarAlertaRegistro(mensaje, tipo) {
 // FUNCIONES DE CONSULTA 
 // ==========================================
 function cargarCaptchaConsulta() {
-    fetch('http://localhost:8081/api/captcha')
+    fetch('/api/captcha')
         .then(response => response.json())
         .then(data => {
             const img = document.getElementById('imagenCaptcha');
@@ -118,14 +119,14 @@ function cargarCaptchaConsulta() {
 function realizarConsulta(event) {
     event.preventDefault(); 
     const payload = {
-        tipo: "DPI",
+		tipo: document.getElementById('tipoBusqueda').value,
         numero: document.getElementById('dpiConsulta').value,
         fechaNacimiento: document.getElementById('fechaNacConsulta').value,
         captchaId: document.getElementById('captchaIdOculto').value,
         captchaRespuesta: document.getElementById('respuestaCaptcha').value
     };
 
-    fetch('http://localhost:8081/api/consultas', {
+    fetch('/api/consultas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -136,22 +137,39 @@ function realizarConsulta(event) {
         
         if (response.ok) {
             const ciudadano = await response.json(); 
-            divResultado.innerHTML = `
-                <div class="card border-success mb-3 mt-3">
-                    <div class="card-header bg-success text-white fw-bold">
-                        ✅ Empadronamiento Activo: ${ciudadano.estado}
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">${ciudadano.datosPersonales.nombreCompleto}</h5>
-                        <p class="card-text mb-1"><strong>DPI (CUI):</strong> ${ciudadano.identificacion.cui}</p>
-                        <p class="card-text mb-1"><strong>Departamento:</strong> ${ciudadano.vecindad.departamento}</p>
-                        <p class="card-text mb-1"><strong>Municipio:</strong> ${ciudadano.vecindad.municipio}</p>
-                        <hr>
-                        <h6 class="fw-bold text-primary">📍 Datos de Votación</h6>
-                        <p class="card-text mb-1"><strong>Centro de Votación:</strong> ${ciudadano.residenciaVotacion.centroVotacion}</p>
-                        <p class="card-text mb-1 text-danger fw-bold"><strong>Mesa Asignada:</strong> ${ciudadano.residenciaVotacion.numeroMesa}</p>
-                    </div>
-                </div>`;
+			divResultado.innerHTML = `
+			                <div class="card border-success mb-3 mt-3 shadow-sm">
+			                    <div class="card-header bg-success text-white fw-bold">
+			                        ✅ Estado: ${ciudadano.estado}
+			                    </div>
+			                    <div class="card-body">
+			                        <!-- 1. IDENTIFICACIÓN -->
+			                        <h6 class="fw-bold text-success border-bottom pb-1">🪪 Identificación</h6>
+			                        <p class="card-text mb-1"><strong>No. Empadronamiento:</strong> ${ciudadano.identificacion.numeroEmpadronamiento || 'N/A'}</p>
+			                        <p class="card-text mb-1"><strong>DPI (CUI):</strong> ${ciudadano.identificacion.cui}</p>
+			                        <p class="card-text mb-1"><strong>Fecha de Emisión:</strong> ${ciudadano.identificacion.fechaEmisionDpi || 'N/A'}</p>
+			                        
+			                        <!-- 2. DATOS PERSONALES -->
+			                        <h6 class="fw-bold text-success border-bottom pb-1 mt-3">👤 Datos Personales</h6>
+			                        <p class="card-text mb-1"><strong>Nombre Completo:</strong> ${ciudadano.datosPersonales.nombreCompleto}</p>
+			                        <p class="card-text mb-1"><strong>Género:</strong> ${ciudadano.datosPersonales.genero || 'N/A'}</p>
+			                        <p class="card-text mb-1"><strong>¿Lee y escribe?:</strong> ${ciudadano.datosPersonales.leeEscribe || 'N/A'}</p>
+			                        <p class="card-text mb-1"><strong>¿Es vidente?:</strong> ${ciudadano.datosPersonales.vidente || 'N/A'}</p>
+			                        
+			                        <!-- 3. VECINDAD -->
+			                        <h6 class="fw-bold text-success border-bottom pb-1 mt-3">📍 Vecindad (DPI)</h6>
+			                        <p class="card-text mb-1"><strong>Departamento:</strong> ${ciudadano.vecindad.departamento}</p>
+			                        <p class="card-text mb-1"><strong>Municipio:</strong> ${ciudadano.vecindad.municipio}</p>
+			                        
+			                        <!-- 4. RESIDENCIA Y VOTACIÓN -->
+			                        <h6 class="fw-bold text-success border-bottom pb-1 mt-3">🗳️ Residencia y Votación</h6>
+			                        <p class="card-text mb-1"><strong>Municipio de Residencia:</strong> ${ciudadano.residenciaVotacion.municipioResidencia || 'N/A'}</p>
+			                        <p class="card-text mb-1"><strong>Dirección Geoelectoral:</strong> ${ciudadano.residenciaVotacion.direccionGeoelectoral || 'N/A'}</p>
+			                        <p class="card-text mb-1"><strong>Centro de Votación:</strong> ${ciudadano.residenciaVotacion.centroVotacion}</p>
+			                        <p class="card-text mb-1 text-danger fw-bold"><strong>Mesa Asignada:</strong> ${ciudadano.residenciaVotacion.numeroMesa}</p>
+			                        <p class="card-text mb-1"><strong>Afiliación:</strong> ${ciudadano.residenciaVotacion.afiliacion || 'N/A'}</p>
+			                    </div>
+			                </div>`;
         } else {
             const errorData = await response.json();
             divResultado.innerHTML = `<div class="alert alert-danger"><strong>❌ ${errorData.mensaje || 'DPI no encontrado o código incorrecto.'}</strong></div>`;

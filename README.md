@@ -1,8 +1,8 @@
-r"""# API REST — Sistema de Registro y Consulta de Padrón Electoral
+# API REST — Sistema de Registro y Consulta de Padrón Electoral
 
-Proyecto académico de **Base de Datos I** de la Universidad Mariano Gálvez de Guatemala, Campus Jutiapa. El backend expone una API REST para registrar empadronamientos, consultar registros y proporcionar catálogos a una futura interfaz de usuario.
+Proyecto académico de **Base de Datos I** de la Universidad Mariano Gálvez de Guatemala, Campus Jutiapa. La aplicación integra una API REST desarrollada con Spring Boot, una interfaz web para el registro y la consulta de empadronamientos, y SQL Server como sistema de persistencia.
 
-> **Estado del proyecto:** backend en desarrollo. La API está construida con Spring Boot y SQL Server. La interfaz web y las medidas adicionales de seguridad descritas como futuras mejoras no deben considerarse implementadas hasta que se desarrollen y prueben.
+> **Estado del proyecto:** la interfaz web está integrada en la aplicación Spring Boot y se sirve desde el mismo origen que la API. El backend utiliza el puerto **8081** en el entorno configurado.
 
 ## Contenido
 
@@ -11,15 +11,16 @@ Proyecto académico de **Base de Datos I** de la Universidad Mariano Gálvez de 
 - [Arquitectura general](#arquitectura-general)
 - [Requisitos previos](#requisitos-previos)
 - [Preparación de SQL Server](#preparación-de-sql-server)
+- [Fase 5: Seguridad de red y firewall](#fase-5-seguridad-de-red-y-firewall)
 - [Configuración de la aplicación](#configuración-de-la-aplicación)
 - [Ejecutar el proyecto](#ejecutar-el-proyecto)
 - [Endpoints principales](#endpoints-principales)
 - [Documentación OpenAPI y Swagger](#documentación-openapi-y-swagger)
 - [Seguridad actual y mejoras previstas](#seguridad-actual-y-mejoras-previstas)
-- [Interfaz de usuario futura](#interfaz-de-usuario-futura)
+- [Frontend web](#frontend-web)
 - [Pruebas y verificación](#pruebas-y-verificación)
 - [Trabajo en equipo y Git](#trabajo-en-equipo-y-git)
-- [Limitaciones conocidas](#limitaciones-conocidas)
+- [Consideraciones de seguridad y despliegue](#consideraciones-de-seguridad-y-despliegue)
 
 ## Objetivo y alcance
 
@@ -53,10 +54,15 @@ La aplicación **no crea las tablas de la base de datos automáticamente**. La c
 Flujo simplificado:
 
 ```text
-Interfaz de usuario (futura)
-          |
-          | HTTP/HTTPS + JSON
-          v
+Navegador web
+    |
+    | HTTP + JSON (mismo origen)
+    v
+Frontend integrado (src/main/resources/static)
+    |  registro.html · consulta.html · app.js
+    |
+    | solicitudes a /api/...
+    v
 API REST — Spring Boot
           |
           +-- Controllers
@@ -72,6 +78,7 @@ API REST — Spring Boot
 
 Responsabilidades principales:
 
+- **Frontend web:** presenta los formularios de registro y consulta, carga catálogos, solicita CAPTCHA, envía solicitudes JSON y presenta mensajes y resultados.
 - **Controllers:** reciben solicitudes HTTP y devuelven respuestas REST.
 - **Services:** coordinan las operaciones y reglas propias de la aplicación.
 - **Repository:** accede a SQL Server mediante JDBC y ejecuta procedimientos almacenados.
@@ -94,10 +101,12 @@ El proyecto no incluye Maven Wrapper; se espera que cada desarrollador tenga Mav
 ## Preparación de SQL Server
 
 1. Configurar SQL Server en el servidor o máquina virtual asignada al proyecto.
-2. Ejecutar el script SQL del proyecto siguiendo sus instrucciones y revisando antes las secciones que crean o modifican objetos y datos de prueba.
+2. Ejecutar el script SQL del proyecto **Versión 3** (`Version_3_-_Script_Padron_Electoral.txt`) siguiendo sus instrucciones y revisando antes las secciones que crean o modifican objetos y datos de prueba.
 3. Confirmar que existen la base `PadronElectoral`, el esquema `Temporal` y los procedimientos almacenados requeridos por el backend.
 4. Crear o configurar la cuenta de servicio de la aplicación con **privilegios mínimos**. La cuenta prevista, `app_padron`, debe tener permiso para ejecutar únicamente los procedimientos necesarios, no acceso general a las tablas.
 5. Probar la conectividad desde el equipo donde correrá la API.
+
+**Script de base de datos utilizado:** se trabajó con la **Versión 3 del Script del Padrón Electoral para SQL Server**. Esta versión conserva el historial de cambios de la V2 e incorpora correcciones identificadas como V3. Antes de ejecutarlo, revisa especialmente la variable `@EliminarBaseExistente`, cuyo valor predeterminado es `0` para evitar borrar accidentalmente una base existente. No cambies ese valor a `1` sin respaldo y autorización para recrear la base.
 
 **Importante:** revisa y cambia cualquier contraseña de ejemplo incluida en scripts SQL antes de ejecutar el script en un entorno compartido. No publiques contraseñas reales en GitHub. Los datos de prueba deben ser ficticios.
 
@@ -112,18 +121,18 @@ La configuración base se encuentra en:
 Actualmente contiene, entre otras, estas propiedades:
 
 - Nombre de aplicación: `empadronamiento-api`
-- Puerto HTTP de la API: `8080`
+- Puerto HTTP de la API: `8081`
 - Base de datos: `PadronElectoral`
 - Usuario de base de datos: `app_padron`
-- Contraseña: se obtiene de la variable de entorno `DB_PASSWORD`
+- Credenciales: se configuran en `application.properties`; se recomienda externalizar la contraseña mediante una variable de entorno (`DB_PASSWORD`) y no guardar secretos en Git
 
-La contraseña está configurada mediante:
+Para evitar exponer credenciales, configura la contraseña mediante una variable de entorno y evita guardar valores reales en `application.properties` o en el repositorio. Si se adopta `DB_PASSWORD`, la propiedad debe referenciarla así:
 
 ```properties
-spring.datasource.password=${DB_PASSWORD:}
+spring.datasource.password=${DB_PASSWORD}
 ```
 
-Por tanto, define `DB_PASSWORD` en el entorno de ejecución. No reemplaces esta configuración por una contraseña real guardada en el repositorio.
+Define `DB_PASSWORD` en el entorno de ejecución. No incluyas la contraseña real en este README ni la subas a Git.
 
 ### Configurar `DB_PASSWORD` en Windows
 
@@ -165,7 +174,7 @@ mvn spring-boot:run
 
 También puede ejecutarse desde Eclipse como **Run As → Spring Boot App** o **Run As → Java Application**, según las opciones que ofrezca la instalación.
 
-La API escucha actualmente en el puerto `8080`. La aplicación necesita conectividad con SQL Server para completar las operaciones que acceden a la base de datos.
+La aplicación escucha actualmente en el puerto `8081`. La aplicación necesita conectividad con SQL Server para completar las operaciones que acceden a la base de datos.
 
 ## Endpoints principales
 
@@ -197,13 +206,13 @@ El plugin de OpenAPI Generator genera modelos e interfaces Java durante el ciclo
 
 Con la aplicación en ejecución, Swagger UI está configurado para abrirse en:
 
-- `http://localhost:8080/swagger-ui.html`
+- `http://localhost:8081/swagger-ui.html`
 
-La dirección puede variar si se cambia la configuración de Springdoc o el puerto de la aplicación.
+El frontend y Swagger UI se acceden en el mismo origen local. Si se cambia el puerto en la configuración, deben actualizarse las direcciones utilizadas.
 
 ## Seguridad actual y mejoras previstas
 
-La seguridad debe desarrollarse y probarse antes de considerar un despliegue real. Las siguientes medidas son una propuesta de trabajo; no todas están implementadas actualmente.
+La aplicación incluye validaciones y un CAPTCHA en los flujos que corresponden según el contrato y el código del proyecto. Para un despliegue fuera del entorno académico, deben revisarse y configurarse las medidas de seguridad de infraestructura y aplicación que correspondan. Las recomendaciones siguientes describen buenas prácticas de despliegue; no implican que cada mecanismo esté habilitado en el entorno actual.
 
 ### Medidas de base de datos y red
 
@@ -214,6 +223,18 @@ La seguridad debe desarrollarse y probarse antes de considerar un despliegue rea
 - No abrir el puerto de administración remota a toda la red.
 - Usar una cuenta de base de datos dedicada con permisos mínimos y contraseñas robustas.
 - Mantener copias de seguridad y restringir quién puede acceder a ellas.
+
+### Fase 5: Seguridad de red y configuración de firewall (reglas de entrada)
+
+De acuerdo con los lineamientos del proyecto (sección 6.1) y las buenas prácticas de administración de servidores, el sistema operativo **Windows Server 2022 mantuvo activo el Firewall de Windows Defender**, garantizando el aislamiento del entorno.
+
+Para permitir la conectividad entre la aplicación externa —backend desarrollado con Spring Boot— y el motor de base de datos, se configuró una regla específica de tráfico entrante:
+
+- **Regla de conexión a SQL Server (motor de base de datos):** se creó una regla de entrada (*Inbound Rule*) que permite explícitamente el tráfico a través del **puerto TCP 1433**, puerto predeterminado utilizado por Microsoft SQL Server para recibir conexiones en la configuración del proyecto.
+- **Justificación técnica:** sin la apertura de este puerto específico, el firewall bloquearía los intentos de conexión desde el backend hacia SQL Server, provocando fallos en las operaciones de validación, consulta e inserción del sistema de registro ciudadano. Estos problemas podrían manifestarse como tiempos de espera (*timeout*) o errores de la aplicación.
+- **Principio de mínimo acceso:** se habilitó únicamente el puerto requerido para la comunicación con SQL Server, evitando exponer innecesariamente otros servicios del servidor a la red interna.
+
+La regla debe limitarse, cuando sea posible, a las direcciones IP de los equipos autorizados para comunicarse con SQL Server. El puerto 1433 no debe exponerse directamente a Internet. Si cambia la dirección del servidor, el puerto configurado o la ubicación del backend, se debe revisar la regla del firewall y volver a comprobar la conectividad.
 
 ### Spring Security
 
@@ -250,16 +271,33 @@ En ambos casos, deben protegerse las claves privadas, renovarse los certificados
 - Usar exclusivamente datos ficticios en las pruebas y demostraciones.
 - Definir una política de respaldo, acceso, retención y eliminación de datos para cualquier entorno que llegue a contener datos reales.
 
-## Interfaz de usuario futura
+## Frontend web
 
-El frontend no forma parte del backend REST actual. Puede desarrollarse como una aplicación web independiente que consuma la API por HTTP/HTTPS y envíe y reciba JSON.
+El frontend está integrado en el proyecto Spring Boot dentro de `src/main/resources/static/`. Spring Boot sirve estos archivos directamente, por lo que las páginas pueden consumir la API mediante rutas relativas (`/api/...`) sin configurar un servidor frontend independiente para el uso local.
 
-Como mínimo, se prevén dos pantallas:
+| Archivo | Responsabilidad |
+|---|---|
+| `src/main/resources/static/registro.html` | Formulario de registro de empadronamiento, datos personales y de identificación, selección de catálogos, CAPTCHA y envío de la solicitud. |
+| `src/main/resources/static/consulta.html` | Formulario de consulta por tipo de identificador, número, fecha de nacimiento y CAPTCHA; muestra los datos devueltos por la API. |
+| `src/main/resources/static/app.js` | Carga catálogos, solicita CAPTCHA, prepara y envía las solicitudes JSON de registro y consulta, y presenta mensajes y resultados. |
 
-1. **Registro:** formulario para los datos requeridos, selección de municipio, centro y mesa mediante los endpoints de catálogos, validación de campos y confirmación del número de empadronamiento generado.
-2. **Consulta:** selección del tipo de búsqueda, captura de los datos requeridos por el contrato, resolución del CAPTCHA y presentación controlada del resultado.
+La interfaz utiliza **HTML, CSS, JavaScript y Bootstrap 5.3.2**. Los formularios se comunican con los endpoints REST del mismo servidor:
 
-La tecnología del frontend (por ejemplo, React, Angular o una interfaz web más sencilla) queda pendiente de decisión del equipo. Antes de implementarlo, conviene acordar el contrato de API y el manejo de errores. También se debe configurar CORS con los orígenes concretos del frontend, si se despliega en un origen distinto.
+- Registro: `POST /api/empadronamientos`.
+- Consulta: `POST /api/consultas`.
+- CAPTCHA: `GET /api/captcha`.
+- Catálogos: rutas bajo `/api/catalogos/`.
+
+### Acceso local
+
+Con la aplicación iniciada, abrir en el navegador:
+
+- **Registro:** `http://localhost:8081/registro.html`
+- **Consulta:** `http://localhost:8081/consulta.html`
+- **Swagger UI:** `http://localhost:8081/swagger-ui.html`
+- **OpenAPI JSON:** `http://localhost:8081/v3/api-docs`
+
+Se recomienda abrir estas direcciones desde Spring Boot y no abrir los HTML directamente mediante `file://`, ya que el frontend utiliza rutas relativas para comunicarse con la API.
 
 ## Pruebas y verificación
 
@@ -287,12 +325,10 @@ Se utilizan ramas para separar el desarrollo. El flujo sugerido es:
 
 No se deben subir contraseñas, certificados privados, archivos locales de configuración con secretos ni datos reales. La carpeta `target/` y los archivos generados durante la compilación están excluidos por `.gitignore`.
 
-## Limitaciones conocidas
+## Consideraciones de seguridad y despliegue
 
-- El frontend todavía debe desarrollarse.
-- La estrategia final de autenticación y autorización con Spring Security está pendiente de definición e implementación.
-- HTTPS debe configurarse para el entorno de despliegue; la URL local HTTP no representa una configuración de producción.
-- Las reglas definitivas de firewall dependen de dónde se desplieguen la API y SQL Server y de las IP de los clientes autorizados.
-- La conexión, las operaciones y las pruebas deben validarse en el entorno del equipo; una compilación correcta por sí sola no demuestra que todos los endpoints funcionen con la base de datos.
-
----
+- La estrategia de autenticación y autorización debe corresponder al alcance y al entorno en el que se utilice el sistema.
+- HTTPS debe configurarse para entornos compartidos o accesibles desde otros equipos; el acceso local mediante HTTP es para desarrollo.
+- Las reglas de firewall dependen de dónde se desplieguen la API y SQL Server y de las direcciones autorizadas.
+- La compilación correcta no sustituye las pruebas funcionales en el entorno conectado a SQL Server.
+- No publicar contraseñas, datos personales ni otros secretos en el repositorio, capturas o documentación.

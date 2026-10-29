@@ -1,3 +1,6 @@
+/*primera version la V3 es la utilizad, esta el la carpeta Querrysql
+
+
 /* =====================================================================
    PROYECTO BASE DE DATOS I - PADRÓN ELECTORAL (JUTIAPA)
    Script DDL basado en el modelo Arquitecto_Datos.dm1

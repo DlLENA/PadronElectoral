@@ -13,8 +13,10 @@ info:
   version: 1.0.0
 
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8081
     description: Desarrollo local (la API corre en la PC del desarrollador)
+  - url: http://ip(si se implementa)
+    description: cuando se aplique las reglas de firewall
   - url: http://172.16.0.100:8080
     description: Servidor SRV-PRJFINAL (solo si la API se despliega en la VM de la base de datos)
 
